@@ -1,3 +1,5 @@
+package controller;
+
 import boundaries.GitHubBoundary;
 import boundaries.JiraBoundary;
 import entities.Release;
@@ -9,11 +11,14 @@ import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 public class ReleaseManager {
 
-    public static ArrayList<Release> getReleases(String projName) throws IOException, URISyntaxException {
+    private ReleaseManager(){}
+
+    public static List<Release> getReleases(String projName) throws IOException, URISyntaxException {
         Set<Release> releaseSet = JiraBoundary.getReleaseSet(projName);
 
         ArrayList<Release> releases = new ArrayList<>(releaseSet);
@@ -35,7 +40,7 @@ public class ReleaseManager {
 
     private static ArrayList<Release> sortCommitsIntoReleases(ArrayList<Release> releases, String projName) throws IOException {
 
-        Date cutoffDate = Conversions.LocalDateToDate(releases.get(releases.size()-1).getReleaseDate());
+        Date cutoffDate = Conversions.localDateToDate(releases.get(releases.size()-1).getReleaseDate());
         ArrayList<GHCommit> commits = GitHubBoundary.getOrderedCommits(projName, cutoffDate);
 
         for(GHCommit c:commits){

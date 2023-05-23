@@ -12,6 +12,8 @@ import java.util.Date;
 
 public class GitHubBoundary {
 
+    private GitHubBoundary(){}
+
     private static ArrayList<GHCommit> commits;
     public static ArrayList<GHCommit> getOrderedCommits(String projName, Date cutoffDate) throws IOException {
 
@@ -37,8 +39,9 @@ public class GitHubBoundary {
             try {
                 return ghCommit.getCommitDate();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
+            return null;
         });
 
         commits.sort(byDate);

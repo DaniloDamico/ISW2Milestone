@@ -1,3 +1,5 @@
+package controller;
+
 import boundaries.JiraBoundary;
 import entities.Bug;
 import entities.JiraTicket;
@@ -6,11 +8,11 @@ import entities.Release;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Proportion {
     private final String[] projects = {"AVRO", "OPENJPA", "STORM", "ZOOKEEPER", "TAJO"};
     double pColdStart = 0;
-    // double pColdStart = 1.7670585166374084;
 
     public Proportion() throws IOException, URISyntaxException {
         coldStart();
@@ -25,10 +27,10 @@ public class Proportion {
     }
 
     private double computePColdStart(String project) throws IOException, URISyntaxException {
-        ArrayList<Release> releases = ReleaseManager.getReleases(project);
-        ArrayList<JiraTicket> tickets = JiraBoundary.getTickets(project, releases);
+        ArrayList<Release> releases = (ArrayList<Release>) ReleaseManager.getReleases(project);
+        ArrayList<JiraTicket> tickets = (ArrayList<JiraTicket>) JiraBoundary.getTickets(project, releases);
 
-        ArrayList<Bug> bugs = BugManager.getValidBugsMin(tickets, releases);
+        ArrayList<Bug> bugs = (ArrayList<Bug>) BugManager.getValidBugsMin(tickets, releases);
 
         double pNumerator = 0;
         // we exclude issues that are not post release, this means we exclude defects that have IV=FV
@@ -52,10 +54,10 @@ public class Proportion {
     }
 
     // parameter bugs is the list of bugs of the project without an injected version
-    public ArrayList<Bug> AddInjectedVersionsMovingWindow(ArrayList<Bug> bugList, ArrayList<Release> releases){
+    public List<Bug> addInjectedVersionsMovingWindow(List<Bug> bugList, List<Release> releases){
         int movingWindow = (int) Math.max(Math.round(bugList.size()/100.0), 1); // l'1% dei difetti totali
 
-        System.out.println("Inizio calcolo di IV con Proportion Moving window: " + movingWindow);
+        System.out.println("Inizio calcolo di IV con controller.Proportion Moving window: " + movingWindow);
 
         for(int i=0; i<bugList.size();i++){
             Bug b = bugList.get(i);
@@ -64,7 +66,7 @@ public class Proportion {
 
             if (b.getInjectedVersion()==null){
                 double p;
-                ArrayList<Bug> bugsToComputeProportionOn = findBugsToComputeProportionOn(bugList, i, movingWindow);
+                ArrayList<Bug> bugsToComputeProportionOn = (ArrayList<Bug>) findBugsToComputeProportionOn(bugList, i, movingWindow);
                 if(bugsToComputeProportionOn == null)
                     p = pColdStart;
                 else{
@@ -79,7 +81,7 @@ public class Proportion {
                         else
                             pNumerator += (currFV - currIV) / (double)(currFV - currOV);
                     }
-                    p = pNumerator / (double)movingWindow;
+                    p = pNumerator / movingWindow;
                 }
                 // P = (FV - IV) / (FV - OV) therefore IV = FV - P * (FV - OV)
 
@@ -102,7 +104,7 @@ public class Proportion {
         return bugList;
     }
 
-    private ArrayList<Bug> findBugsToComputeProportionOn(ArrayList<Bug> bugs, int i, int movingWindow) {
+    private List<Bug> findBugsToComputeProportionOn(List<Bug> bugs, int i, int movingWindow) {
         // find the movingWindow elements before the current bug to compute proportion on
         ArrayList<Bug> bugsToComputeProportionOn = new ArrayList<>();
         int j = i-1;

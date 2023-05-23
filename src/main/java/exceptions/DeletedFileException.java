@@ -1,4 +1,4 @@
 package exceptions;
 
-public class DeletedFileException extends Throwable {
+public class DeletedFileException extends Exception {
 }

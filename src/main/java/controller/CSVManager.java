@@ -1,3 +1,5 @@
+package controller;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -6,14 +8,14 @@ import java.nio.file.Path;
 
 public class CSVManager {
 
-    private static final String folder = "output/";
+    private static final String FOLDER = "output/";
     private static String filename;
     private static FileWriter dataset;
 
     private static void createFile() {
         try{
-            Files.deleteIfExists(Path.of(folder + filename));
-            new File(folder + filename);
+            Files.deleteIfExists(Path.of(FOLDER + filename));
+            new File(FOLDER + filename);
         } catch(Exception e){
             System.out.println("File creation failed");
             e.printStackTrace();
@@ -23,7 +25,7 @@ public class CSVManager {
     //sostituire con metodo writeLine
     private static void initializeWriter(){
         try {
-            dataset = new FileWriter(folder + filename);
+            dataset = new FileWriter(FOLDER + filename);
         } catch (IOException e) {
             System.out.println("File initialization failed");
             e.printStackTrace();

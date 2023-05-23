@@ -1,3 +1,5 @@
+package controller;
+
 import boundaries.JiraBoundary;
 import entities.Bug;
 import entities.JiraTicket;
@@ -8,12 +10,15 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class BugManager {
 
-    public static ArrayList<Bug> getBugs(String projName, ArrayList<Release> releases) throws IOException, URISyntaxException {
+    private BugManager() {}
 
-        ArrayList<JiraTicket> tickets = JiraBoundary.getTickets(projName, releases);
+    public static List<Bug> getBugs(String projName, List<Release> releases) throws IOException, URISyntaxException {
+
+        ArrayList<JiraTicket> tickets = (ArrayList<JiraTicket>) JiraBoundary.getTickets(projName, releases);
         ArrayList<Bug> bugs = new ArrayList<>();
         System.out.println("TICKETS: " + tickets.size());
 
@@ -60,15 +65,15 @@ public class BugManager {
 
         Proportion proportion = new Proportion();
         System.out.println("Bugs: " + bugs.size());
-        return proportion.AddInjectedVersionsMovingWindow(bugs, releases);
+        return proportion.addInjectedVersionsMovingWindow(bugs, releases);
     }
 
     // Bug manager for cold start proportion
-    public static ArrayList<Bug> getValidBugsMin(ArrayList<JiraTicket> tickets, ArrayList<Release> releases) {
+    public static List<Bug> getValidBugsMin(List<JiraTicket> tickets, List<Release> releases) {
 
         ArrayList<Bug> bugs = new ArrayList<>();
         for(JiraTicket ticket:tickets){
-            if(ticket.getAffectedVersions().size() == 0 || ticket.getAffectedVersions().get(0) == null)
+            if(ticket.getAffectedVersions().isEmpty() || ticket.getAffectedVersions().get(0) == null)
                 continue;
 
             Bug currBug = new Bug();
@@ -77,8 +82,7 @@ public class BugManager {
             Release openingVersion = computeOpeningVersion(ticket, releases);
             Release fixedVersion = ticket.getFixVersion();
 
-            if(openingVersion == null || fixedVersion == null || injectedVersion == null) continue; // il bug è ignorato perchè mancano i dati per analizzarlo
-            if(openingVersion.getVersionNumber()>fixedVersion.getVersionNumber()) continue; // il bug è ignorato perchè semanticamente sbagliato
+            if(openingVersion == null || fixedVersion == null || injectedVersion == null || openingVersion.getVersionNumber()>fixedVersion.getVersionNumber()) continue;
 
             currBug.setInjectedVersion(injectedVersion);
             currBug.setOpeningVersion(openingVersion);
@@ -89,7 +93,7 @@ public class BugManager {
         return bugs;
     }
 
-    private static Release computeOpeningVersion(JiraTicket ticket, ArrayList<Release> releases) {
+    private static Release computeOpeningVersion(JiraTicket ticket, List<Release> releases) {
 
         for(Release r:releases){
             if(!r.getReleaseDate().isBefore(ticket.getCreated().toLocalDate()))

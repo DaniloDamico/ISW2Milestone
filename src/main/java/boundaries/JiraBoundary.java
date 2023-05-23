@@ -14,9 +14,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class JiraBoundary {
+
+    private JiraBoundary(){}
+
+    private static final String RELEASE_DATE = "releaseDate";
+    private static final String FIELDS = "fields";
 
     public static Set<Release> getReleaseSet(String projName) throws IOException, URISyntaxException {
 
@@ -30,13 +36,13 @@ public class JiraBoundary {
 
             String name = "";
             String id = "";
-            if(ver.has("releaseDate")) {
+            if(ver.has(RELEASE_DATE)){
                 if (ver.has("name"))
                     name = ver.get("name").toString();
                 if (ver.has("id"))
                     id = ver.get("id").toString();
 
-                releaseSet.add(getRelease(ver.get("releaseDate").toString(),name,id));
+                releaseSet.add(getRelease(ver.get(RELEASE_DATE).toString(),name,id));
             }
         }
         return releaseSet;
@@ -53,11 +59,14 @@ public class JiraBoundary {
         return rel;
     }
 
-    public static ArrayList<JiraTicket> getTickets(String projName, ArrayList<Release> releases) throws IOException, URISyntaxException {
+    public static List<JiraTicket> getTickets(String projName, List<Release> releases) throws IOException, URISyntaxException {
 
         ArrayList<JiraTicket> tickets = new ArrayList<>();
 
-        int i=0, j, total;
+        int i=0;
+        int j;
+        int total;
+
         JSONArray issues = new JSONArray();
         do {
             j=i+1000;
@@ -84,20 +93,20 @@ public class JiraBoundary {
         return tickets;
     }
 
-    private static JiraTicket getTicket(JSONObject ticket, ArrayList<Release> releases){
+    private static JiraTicket getTicket(JSONObject ticket, List<Release> releases){
         JiraTicket newTicket = new JiraTicket();
 
         newTicket.setKey(ticket.get("key").toString());
-        newTicket.setCreated(LocalDateTime.parse(ticket.getJSONObject("fields").get("created").toString().substring(0,23)));
+        newTicket.setCreated(LocalDateTime.parse(ticket.getJSONObject(FIELDS).get("created").toString().substring(0,23)));
 
-        JSONArray versions = ticket.getJSONObject("fields").getJSONArray("versions");
+        JSONArray versions = ticket.getJSONObject(FIELDS).getJSONArray("versions");
 
         for(Object v:versions){
             JSONObject ver = (JSONObject)v;
 
             LocalDate verDate;
             try {
-                verDate = LocalDate.parse(ver.get("releaseDate").toString());
+                verDate = LocalDate.parse(ver.get(RELEASE_DATE).toString());
             } catch (Exception e){
                 continue;
             }
@@ -110,9 +119,9 @@ public class JiraBoundary {
         }
 
         try {
-            JSONArray fixVersions = ticket.getJSONObject("fields").getJSONArray("fixVersions");
+            JSONArray fixVersions = ticket.getJSONObject(FIELDS).getJSONArray("fixVersions");
             JSONObject fixVersion = (JSONObject) fixVersions.get(fixVersions.length() - 1);
-            LocalDate fixDate = LocalDate.parse(fixVersion.get("releaseDate").toString());
+            LocalDate fixDate = LocalDate.parse(fixVersion.get(RELEASE_DATE).toString());
             for (Release r : releases) {
                 if (r.getReleaseDate().equals(fixDate) || r.getVersionName().equals(fixVersion.get("name").toString())) {
                     newTicket.setFixVersion(r);

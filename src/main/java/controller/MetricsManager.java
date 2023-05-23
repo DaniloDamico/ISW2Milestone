@@ -1,3 +1,5 @@
+package controller;
+
 import entities.Bug;
 import entities.JavaFile;
 import entities.Release;
@@ -6,22 +8,25 @@ import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GitUser;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class MetricsManager {
     private final CSVManager csvManager;
     private ArrayList<Bug> bugs;
-    private static final String header = "Version,File Name,LOC,LOC_touched,NR,NFix,NAuth,LOC_added,MAX_LOC_added,AVG_LOC_added,Churn,MAX_Churn,AVG_Churn,ChgSetSize,MAX_ChgSet,AVG_ChgSet,Buggy";
+    private static final String HEADER = "Version,File Name,LOC,LOC_touched,NR,NFix,NAuth,LOC_added,MAX_LOC_added,AVG_LOC_added,Churn,MAX_Churn,AVG_Churn,ChgSetSize,MAX_ChgSet,AVG_ChgSet,Buggy";
 
     public MetricsManager(String projName){
         csvManager = new CSVManager(projName);
     }
 
     //metrics don't stack between releases
-    public void buildDataset(ArrayList<Release> releases, ArrayList<Bug> bugs) throws IOException {
+    public void buildDataset(List<Release> releases, List<Bug> bugs) throws IOException {
 
         this.bugs = new ArrayList<>(bugs);
-        csvManager.writeLine(header);
+        csvManager.writeLine(HEADER);
         ArrayList<JavaFile> files = new ArrayList<>();
 
         ArrayList<Release> firstHalf = new ArrayList<>(releases.subList(0, releases.size()/2));
@@ -70,11 +75,11 @@ public class MetricsManager {
                         line += "no";
 
                     csvManager.writeLine(line);
-                } catch (Exception e){
-                    e.printStackTrace();
                 }
                 catch (DeletedFileException e) {
                     jf.setDeleted(true);
+                } catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         }
@@ -142,21 +147,20 @@ public class MetricsManager {
         }
         return null;
     }
-    private boolean computeBuggy(int versionNumber, String filename, ArrayList<Bug> bugs) {
+    private boolean computeBuggy(int versionNumber, String filename, List<Bug> bugs) {
         for (Bug bug : bugs) {
 
             int iv = bug.getInjectedVersion().getVersionNumber();
             int fv = bug.getFixedVersion().getVersionNumber();
-            if (versionNumber < fv && versionNumber >= iv) {
-                if(bug.getBuggyFileNames().contains(filename))
-                    return true;
+            if (versionNumber < fv && versionNumber >= iv && bug.getBuggyFileNames().contains(filename)) {
+                return true;
             }
         }
         return false;
     }
 
     //non cumula i valori tra le release
-    private int computeNfix(int releaseNumber, JavaFile jf, ArrayList<Bug> bugs) throws IOException {
+    private int computeNfix(int releaseNumber, JavaFile jf, List<Bug> bugs) throws IOException {
         int nfix = jf.getNfix();
         for (Bug bug : bugs) {
             int fv = bug.getFixedVersion().getVersionNumber();
@@ -190,7 +194,7 @@ public class MetricsManager {
             if(f.getLinesAdded()>maxLocAdded){
                 maxLocAdded=f.getLinesAdded();
             }
-            locTouched += f.getLinesAdded() - f.getLinesDeleted() + f.getLinesChanged(); //TODO check
+            locTouched += f.getLinesAdded() - f.getLinesDeleted() + f.getLinesChanged();
             churn+= f.getLinesAdded() + f.getLinesDeleted();
             if((f.getLinesAdded() + f.getLinesDeleted())>maxChurn){
                 maxChurn=churn;
@@ -211,7 +215,7 @@ public class MetricsManager {
         jf.setMaxLocAdded(maxLocAdded);
         jf.setAvgLocAdded(avglocadded);
         jf.setLocTouched(locTouched);
-        jf.setNr(nr);;
+        jf.setNr(nr);
         jf.setChurn(churn);
         jf.setMaxChurn(maxChurn);
         jf.setAvgChurn(avgChurn);

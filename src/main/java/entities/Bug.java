@@ -4,10 +4,12 @@ import org.kohsuke.github.GHCommit;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class Bug {
     private ArrayList<GHCommit> commits;
-    private HashSet<String> buggyFiles = new HashSet<>();
+    private final HashSet<String> buggyFiles = new HashSet<>();
 
     private Release injectedVersion = null;
     private Release openingVersion;
@@ -21,7 +23,7 @@ public class Bug {
         this.fixedVersion = fixedVersion;
     }
 
-    public HashSet<String> getBuggyFileNames() {
+    public Set<String> getBuggyFileNames() {
         return buggyFiles;
     }
 
@@ -29,11 +31,7 @@ public class Bug {
         this.buggyFiles.add(buggyFile);
     }
 
-    public void setBuggyFiles(HashSet<String> buggyFiles) {
-        this.buggyFiles = buggyFiles;
-    }
-
-    public ArrayList<GHCommit> getCommits() {
+    public List<GHCommit> getCommits() {
         return commits;
     }
 
