@@ -63,13 +63,16 @@ public class BugManager {
             for (GHCommit c : r.getCommits()) {
                 if (c.getCommitShortInfo().getMessage().contains(ticket.getKey())) {
                     linkedCommits.add(c);
-
-                    for (GHCommit.File file : c.getFiles()) {
-                        if (file.getFileName().contains(".java") && !file.getFileName().contains("/test")) {
-                            currBug.addBuggyFile(file.getFileName());
-                        }
-                    }
+                    checkBuggyFiles(currBug, c);
                 }
+            }
+        }
+    }
+
+    private static void checkBuggyFiles(Bug currBug, GHCommit c) throws IOException {
+        for (GHCommit.File file : c.getFiles()) {
+            if (file.getFileName().contains(".java") && !file.getFileName().contains("/test")) {
+                currBug.addBuggyFile(file.getFileName());
             }
         }
     }

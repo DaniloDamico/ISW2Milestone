@@ -53,12 +53,7 @@ public class MetricsManager {
             line += release.getVersionNumber() + ", " + jf.getFilename()+ ", ";
 
             try {
-                for(GHCommit.File f:jf.getFileHistory().get(release)){
-                    if(f.getStatus().equals("removed")){
-                        jf.setDeleted(true);
-                        throw new DeletedFileException();
-                    }
-                }
+                checkDeleted(release, jf);
 
                 line += jf.getLoc() + ", ";
                 line += jf.getLocTouched() + ", ";
@@ -87,6 +82,15 @@ public class MetricsManager {
                 jf.setDeleted(true);
             } catch (Exception e){
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private static void checkDeleted(Release release, JavaFile jf) throws DeletedFileException {
+        for(GHCommit.File f: jf.getFileHistory().get(release)){
+            if(f.getStatus().equals("removed")){
+                jf.setDeleted(true);
+                throw new DeletedFileException();
             }
         }
     }
