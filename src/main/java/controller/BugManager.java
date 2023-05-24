@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class BugManager {
 
@@ -20,9 +21,9 @@ public class BugManager {
 
         ArrayList<JiraTicket> tickets = (ArrayList<JiraTicket>) JiraBoundary.getTickets(projName, releases);
         ArrayList<Bug> bugs = new ArrayList<>();
-        System.out.println("TICKETS: " + tickets.size());
+        Logger.getLogger("BugManager").info("Tickets: " + tickets.size());
 
-        for(JiraTicket ticket:tickets){
+        for (JiraTicket ticket : tickets) {
             Release openingVersion = computeOpeningVersion(ticket, releases);
             Release fixedVersion = ticket.getFixVersion();
 
@@ -35,7 +36,7 @@ public class BugManager {
 
             ArrayList<GHCommit> linkedCommits = new ArrayList<>();
 
-            for(Release r:releases) {
+            for (Release r : releases) {
                 for (GHCommit c : r.getCommits()) {
                     if (c.getCommitShortInfo().getMessage().contains(ticket.getKey())) {
                         linkedCommits.add(c);
@@ -55,18 +56,21 @@ public class BugManager {
             currBug.setFixedVersion(fixedVersion);
 
             try {
-                ArrayList<Release> affectedVersions = ticket.getAffectedVersions();
+                ArrayList<Release> affectedVersions = (ArrayList<Release>) ticket.getAffectedVersions();
                 affectedVersions.sort(Comparator.comparing(Release::getVersionNumber));
                 currBug.setInjectedVersion(ticket.getAffectedVersions().get(0));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                //ignore exception
+            }
 
-            bugs.add(currBug);
+                bugs.add(currBug);
+            }
+
+            Proportion proportion = new Proportion();
+            Logger.getLogger("BugManager").info("Bugs: " + bugs.size());
+            return proportion.addInjectedVersionsMovingWindow(bugs, releases);
         }
 
-        Proportion proportion = new Proportion();
-        System.out.println("Bugs: " + bugs.size());
-        return proportion.addInjectedVersionsMovingWindow(bugs, releases);
-    }
 
     // Bug manager for cold start proportion
     public static List<Bug> getValidBugsMin(List<JiraTicket> tickets, List<Release> releases) {

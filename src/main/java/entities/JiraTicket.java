@@ -2,6 +2,7 @@ package entities;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JiraTicket {
     private final ArrayList<Release> affectedVersions = new ArrayList<>();
@@ -18,7 +19,7 @@ public class JiraTicket {
         this.fixVersion = fixVersion;
     }
 
-    public ArrayList<Release> getAffectedVersions() {
+    public List<Release> getAffectedVersions() {
         return affectedVersions;
     }
 

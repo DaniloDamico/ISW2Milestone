@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class Proportion {
     private final String[] projects = {"AVRO", "OPENJPA", "STORM", "ZOOKEEPER", "TAJO"};
@@ -16,7 +17,7 @@ public class Proportion {
 
     public Proportion() throws IOException, URISyntaxException {
         coldStart();
-        System.out.println("pColdStart: " + pColdStart);
+        Logger.getLogger("Proportion").info("pColdStart: " + pColdStart);
     }
 
     private void coldStart() throws IOException, URISyntaxException {
@@ -29,25 +30,25 @@ public class Proportion {
     private double computePColdStart(String project) throws IOException, URISyntaxException {
         ArrayList<Release> releases = (ArrayList<Release>) ReleaseManager.getReleases(project);
         ArrayList<JiraTicket> tickets = (ArrayList<JiraTicket>) JiraBoundary.getTickets(project, releases);
-
         ArrayList<Bug> bugs = (ArrayList<Bug>) BugManager.getValidBugsMin(tickets, releases);
-
         double pNumerator = 0;
-        // we exclude issues that are not post release, this means we exclude defects that have IV=FV
+        int i = 0;
+        // We exclude issues that are not post release, this means we exclude defects that have IV=FV
         // for each defect we check the AV consistency, if IV <= OV
-        for(int i = 0; i < bugs.size(); i++){
+        while (i < bugs.size()) {
             int iv = bugs.get(i).getInjectedVersion().getVersionNumber();
             int ov = bugs.get(i).getOpeningVersion().getVersionNumber();
             int fv = bugs.get(i).getFixedVersion().getVersionNumber();
-            if(iv > ov || ov > fv || iv == fv){
+            if (iv > ov || ov > fv || iv == fv) {
                 bugs.remove(i);
-                i--;
-            } else if( ov==fv){
-                //If FV equals OV, then FV − OV is set to one to avoid divide
-                //by zero cases.
+            } else if (ov == fv) {
+                // If FV equals OV, then FV − OV is set to one to avoid divide by
+                // zero cases.
                 pNumerator += fv - iv;
-            } else{
-                pNumerator += (fv - iv)/(double)(fv-ov);
+                i++;
+            } else {
+                pNumerator += (fv - iv) / (double) (fv - ov);
+                i++;
             }
         }
         return pNumerator / bugs.size();
@@ -57,7 +58,7 @@ public class Proportion {
     public List<Bug> addInjectedVersionsMovingWindow(List<Bug> bugList, List<Release> releases){
         int movingWindow = (int) Math.max(Math.round(bugList.size()/100.0), 1); // l'1% dei difetti totali
 
-        System.out.println("Inizio calcolo di IV con controller.Proportion Moving window: " + movingWindow);
+        Logger.getLogger("Proportion").info("Inizio calcolo di IV con controller.Proportion Moving window: " + movingWindow);
 
         for(int i=0; i<bugList.size();i++){
             Bug b = bugList.get(i);
@@ -67,7 +68,7 @@ public class Proportion {
             if (b.getInjectedVersion()==null){
                 double p;
                 ArrayList<Bug> bugsToComputeProportionOn = (ArrayList<Bug>) findBugsToComputeProportionOn(bugList, i, movingWindow);
-                if(bugsToComputeProportionOn == null)
+                if(bugsToComputeProportionOn.isEmpty())
                     p = pColdStart;
                 else{
                     // compute proportion
@@ -116,7 +117,7 @@ public class Proportion {
         }
 
         if(bugsToComputeProportionOn.size() < movingWindow)
-            return null;
+            return new ArrayList<>();
         else return bugsToComputeProportionOn;
     }
 }

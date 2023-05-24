@@ -7,15 +7,12 @@ import java.util.*;
 
 public class JavaFile {
     private String filename;
-    private Map<Release, ArrayList<GHCommit>> commitsHistory = new HashMap<>();
-    private Map<Release, ArrayList<GHCommit.File>> fileHistory = new HashMap<>();
+    private final Map<Release, ArrayList<GHCommit>> commitsHistory = new HashMap<>();
+    private final Map<Release, ArrayList<GHCommit.File>> fileHistory = new HashMap<>();
     private int loc = 0;
     // LOC: lines of code.
 
     private int locTouched = 0;
-    // LOC Touched: sum over revisions of LOC added and deleted.
-    // Sum over revisions of LOC added + deleted
-    private int locDeleted = 0;
 
     private int nr = 0;
     // NR: number of revisions.
@@ -62,24 +59,16 @@ public class JavaFile {
         return commitsHistory;
     }
 
-    public void setCommitsHistory(Map<Release, ArrayList<GHCommit>> commitsHistory) {
-        this.commitsHistory = commitsHistory;
-    }
-
-    public void putInCommitsHistory(Release release, ArrayList<GHCommit> commits) {
-        commitsHistory.put(release, commits);
+    public void putInCommitsHistory(Release release, List<GHCommit> commits) {
+        commitsHistory.put(release, (ArrayList<GHCommit>) commits);
     }
 
     public Map<Release, ArrayList<GHCommit.File>> getFileHistory() {
         return fileHistory;
     }
 
-    public void setFileHistory(Map<Release, ArrayList<GHCommit.File>> fileHistory) {
-        this.fileHistory = fileHistory;
-    }
-
-    public void putInFileHistory(Release release, ArrayList<GHCommit.File> files) {
-        fileHistory.put(release, files);
+    public void putInFileHistory(Release release, List<GHCommit.File> files) {
+        fileHistory.put(release, (ArrayList<GHCommit.File>) files);
     }
 
     public int getLoc() {
@@ -136,14 +125,6 @@ public class JavaFile {
 
     public void setMaxLocAdded(int maxLocAdded) {
         this.maxLocAdded = maxLocAdded;
-    }
-
-    public int getLocDeleted() {
-        return locDeleted;
-    }
-
-    public void setLocDeleted(int locDeleted) {
-        this.locDeleted = locDeleted;
     }
 
     public int getNfix() {

@@ -41,7 +41,7 @@ public class ReleaseManager {
     private static ArrayList<Release> sortCommitsIntoReleases(ArrayList<Release> releases, String projName) throws IOException {
 
         Date cutoffDate = Conversions.localDateToDate(releases.get(releases.size()-1).getReleaseDate());
-        ArrayList<GHCommit> commits = GitHubBoundary.getOrderedCommits(projName, cutoffDate);
+        ArrayList<GHCommit> commits = (ArrayList<GHCommit>) GitHubBoundary.getOrderedCommits(projName, cutoffDate);
 
         for(GHCommit c:commits){
             for(Release r:releases){

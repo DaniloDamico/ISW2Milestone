@@ -35,14 +35,10 @@ public class JiraBoundary {
             JSONObject ver = (JSONObject) obj;
 
             String name = "";
-            String id = "";
             if(ver.has(RELEASE_DATE)){
                 if (ver.has("name"))
                     name = ver.get("name").toString();
-                if (ver.has("id"))
-                    id = ver.get("id").toString();
-
-                releaseSet.add(getRelease(ver.get(RELEASE_DATE).toString(),name,id));
+                releaseSet.add(getRelease(ver.get(RELEASE_DATE).toString(),name));
             }
         }
         return releaseSet;
@@ -50,10 +46,9 @@ public class JiraBoundary {
 
     }
 
-    private static Release getRelease(String strDate, String name, String id) {
+    private static Release getRelease(String strDate, String name) {
         Release rel = new Release();
         rel.setReleaseDate(LocalDate.parse(strDate));
-        rel.setVersionId(Integer.parseInt(id));
         rel.setVersionName(name);
 
         return rel;

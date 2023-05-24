@@ -5,35 +5,37 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Logger;
 
 public class CSVManager {
 
     private static final String FOLDER = "output/";
-    private static String filename;
+    private static final String DATASET = "dataset.csv";
     private static FileWriter dataset;
+    private final String projName;
 
-    private static void createFile() {
+    private void createFile() {
         try{
-            Files.deleteIfExists(Path.of(FOLDER + filename));
-            new File(FOLDER + filename);
+            Files.deleteIfExists(Path.of(FOLDER + projName + DATASET));
+            new File(FOLDER + projName + DATASET);
         } catch(Exception e){
-            System.out.println("File creation failed");
+            Logger.getLogger("CSVManager").warning("File creation failed");
             e.printStackTrace();
         }
     }
 
     //sostituire con metodo writeLine
-    private static void initializeWriter(){
+    private void initializeWriter(){
         try {
-            dataset = new FileWriter(FOLDER + filename);
+            dataset = new FileWriter(FOLDER + projName + DATASET);
         } catch (IOException e) {
-            System.out.println("File initialization failed");
+            Logger.getLogger("CSVManager").warning("File initialization failed");
             e.printStackTrace();
         }
     }
 
     public CSVManager(String projName) {
-        filename = projName+"dataset.csv";
+        this.projName = projName;
         createFile();
         initializeWriter();
     }
@@ -42,7 +44,7 @@ public class CSVManager {
         try {
             dataset.write(line);
         } catch (IOException e) {
-            System.out.println("Failed to write line: " + line);
+            Logger.getLogger("CSVManager").warning("Failed to write line: " + line);
             e.printStackTrace();
         }
     }
@@ -52,7 +54,7 @@ public class CSVManager {
             dataset.flush();
             dataset.close();
         } catch (IOException e) {
-            System.out.println("Failed to close dataset");
+            Logger.getLogger("CSVManager").warning("Failed to close dataset");
             e.printStackTrace();
         }
     }

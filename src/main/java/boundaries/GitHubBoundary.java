@@ -9,13 +9,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
 public class GitHubBoundary {
 
     private GitHubBoundary(){}
 
-    private static ArrayList<GHCommit> commits;
-    public static ArrayList<GHCommit> getOrderedCommits(String projName, Date cutoffDate) throws IOException {
+    private static List<GHCommit> commits;
+    public static List<GHCommit> getOrderedCommits(String projName, Date cutoffDate) throws IOException {
 
         GitHub github = GitHubBuilder.fromPropertyFile().build();
         GHRepository repo = github.getRepository("APACHE/" + projName);

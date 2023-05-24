@@ -4,24 +4,16 @@ import org.kohsuke.github.GHCommit;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Release {
 
     private int versionNumber;
 
-    private int versionId;
     private String versionName;
     private LocalDate releaseDate;
 
     private final ArrayList<GHCommit> commits = new ArrayList<>();
-
-    public int getVersionId() {
-        return versionId;
-    }
-
-    public void setVersionId(int versionId) {
-        this.versionId = versionId;
-    }
 
     public String getVersionName() {
         return versionName;
@@ -39,7 +31,7 @@ public class Release {
         this.releaseDate = releaseDate;
     }
 
-    public ArrayList<GHCommit> getCommits() {
+    public List<GHCommit> getCommits() {
         return commits;
     }
 

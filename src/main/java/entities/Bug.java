@@ -35,8 +35,8 @@ public class Bug {
         return commits;
     }
 
-    public void setCommits(ArrayList<GHCommit> commits) {
-        this.commits = commits;
+    public void setCommits(List<GHCommit> commits) {
+        this.commits = (ArrayList<GHCommit>) commits;
     }
 
     public Release getInjectedVersion() {

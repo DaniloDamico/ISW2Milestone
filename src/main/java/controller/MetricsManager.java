@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class MetricsManager {
     private final CSVManager csvManager;
@@ -32,7 +33,7 @@ public class MetricsManager {
         ArrayList<Release> firstHalf = new ArrayList<>(releases.subList(0, releases.size()/2));
 
         for (Release release : firstHalf) {
-            System.out.println("Analyzing release " + release.getVersionNumber());
+            Logger.getLogger("MetricsManager").info("Analyzing release " + release.getVersionNumber());
             addReleaseToFiles(release, files);
 
             for (JavaFile jf: files) {
