@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class BugManager {
@@ -21,7 +22,7 @@ public class BugManager {
 
         ArrayList<JiraTicket> tickets = (ArrayList<JiraTicket>) JiraBoundary.getTickets(projName, releases);
         ArrayList<Bug> bugs = new ArrayList<>();
-        Logger.getLogger("BugManager").info("Tickets: " + tickets.size());
+        Logger.getLogger("BugManager").log(Level.INFO, "Tickets: {0}", tickets.size());
 
         for (JiraTicket ticket : tickets) {
             Release openingVersion = computeOpeningVersion(ticket, releases);
@@ -67,7 +68,7 @@ public class BugManager {
             }
 
             Proportion proportion = new Proportion();
-            Logger.getLogger("BugManager").info("Bugs: " + bugs.size());
+            Logger.getLogger("BugManager").log(Level.INFO, "Bugs: {0}", + bugs.size());
             return proportion.addInjectedVersionsMovingWindow(bugs, releases);
         }
 

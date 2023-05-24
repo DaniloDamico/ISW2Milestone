@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Proportion {
@@ -17,7 +18,7 @@ public class Proportion {
 
     public Proportion() throws IOException, URISyntaxException {
         coldStart();
-        Logger.getLogger("Proportion").info("pColdStart: " + pColdStart);
+        Logger.getLogger("Proportion").log(Level.INFO, "pColdStart: {0}", pColdStart);
     }
 
     private void coldStart() throws IOException, URISyntaxException {
@@ -58,7 +59,7 @@ public class Proportion {
     public List<Bug> addInjectedVersionsMovingWindow(List<Bug> bugList, List<Release> releases){
         int movingWindow = (int) Math.max(Math.round(bugList.size()/100.0), 1); // l'1% dei difetti totali
 
-        Logger.getLogger("Proportion").info("Inizio calcolo di IV con controller.Proportion Moving window: " + movingWindow);
+        Logger.getLogger("Proportion").log(Level.INFO, "Inizio calcolo di IV con controller.Proportion Moving window: {0}", movingWindow);
 
         for(int i=0; i<bugList.size();i++){
             Bug b = bugList.get(i);
