@@ -35,73 +35,80 @@ public class MetricsManager {
         for (Release release : firstHalf) {
             Logger.getLogger("MetricsManager").info("Analyzing release " + release.getVersionNumber());
             addReleaseToFiles(release, files);
-
-            for (JavaFile jf: files) {
-
-                if(jf.getFileHistory().get(release) == null || jf.isDeleted())
-                    continue;
-
-                updateFile(release, jf);
-
-                String line = "\n";
-                line += release.getVersionNumber() + ", " + jf.getFilename()+ ", ";
-
-                try {
-                    for(GHCommit.File f:jf.getFileHistory().get(release)){
-                        if(f.getStatus().equals("removed")){
-                            jf.setDeleted(true);
-                            throw new DeletedFileException();
-                        }
-                    }
-
-                    line += jf.getLoc() + ", ";
-                    line += jf.getLocTouched() + ", ";
-                    line += jf.getNr() + ", ";
-                    line += jf.getNfix() + ", ";
-                    line += jf.getAuthors().size() + ", ";
-                    line += jf.getLocAdded() + ", ";
-                    line += jf.getMaxLocAdded() + ", ";
-                    line += jf.getAvgLocAdded() + ", ";
-                    line += jf.getChurn() + ", ";
-                    line += jf.getMaxChurn() + ", ";
-                    line += jf.getAvgChurn() + ", ";
-                    line += jf.getChangeSet().size() + ", ";
-                    line += jf.getMaxChangeSetSize() + ", ";
-                    line += jf.getAvgChangeSetSize() + ", ";
-
-                    boolean buggy = computeBuggy(release.getVersionNumber(), jf.getFilename(), bugs);
-                    if (buggy)
-                        line += "yes";
-                    else
-                        line += "no";
-
-                    csvManager.writeLine(line);
-                }
-                catch (DeletedFileException e) {
-                    jf.setDeleted(true);
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
+            computeMetricsToDataset(bugs, files, release);
         }
 
         csvManager.close();
+    }
+
+    private void computeMetricsToDataset(List<Bug> bugs, ArrayList<JavaFile> files, Release release) throws IOException {
+        for (JavaFile jf: files) {
+
+            if(jf.getFileHistory().get(release) == null || jf.isDeleted())
+                continue;
+
+            updateFile(release, jf);
+
+            String line = "\n";
+            line += release.getVersionNumber() + ", " + jf.getFilename()+ ", ";
+
+            try {
+                for(GHCommit.File f:jf.getFileHistory().get(release)){
+                    if(f.getStatus().equals("removed")){
+                        jf.setDeleted(true);
+                        throw new DeletedFileException();
+                    }
+                }
+
+                line += jf.getLoc() + ", ";
+                line += jf.getLocTouched() + ", ";
+                line += jf.getNr() + ", ";
+                line += jf.getNfix() + ", ";
+                line += jf.getAuthors().size() + ", ";
+                line += jf.getLocAdded() + ", ";
+                line += jf.getMaxLocAdded() + ", ";
+                line += jf.getAvgLocAdded() + ", ";
+                line += jf.getChurn() + ", ";
+                line += jf.getMaxChurn() + ", ";
+                line += jf.getAvgChurn() + ", ";
+                line += jf.getChangeSet().size() + ", ";
+                line += jf.getMaxChangeSetSize() + ", ";
+                line += jf.getAvgChangeSetSize() + ", ";
+
+                boolean buggy = computeBuggy(release.getVersionNumber(), jf.getFilename(), bugs);
+                if (buggy)
+                    line += "yes";
+                else
+                    line += "no";
+
+                csvManager.writeLine(line);
+            }
+            catch (DeletedFileException e) {
+                jf.setDeleted(true);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
     private void addReleaseToFiles(Release release, ArrayList<JavaFile> files) throws IOException {
         //prende tutti i file nella release e li mette nei files
         for(GHCommit c:release.getCommits()){
             for(GHCommit.File f:c.getFiles()) {
-                if (f.getFileName().contains(".java") && !f.getFileName().contains("/test")) {
-                    if (f.getStatus().equals("added")) {
-                        files.add(createJavaFile(release, f, c));
-                    } else {
-                        try {
-                            addCommitAndFile(release, Objects.requireNonNull(findByName(f, files)), f, c);
-                        } catch (NullPointerException e) {
-                            files.add(createJavaFile(release, f, c));
-                        }
-                    }
+                addFileToFilesList(release, files, c, f);
+            }
+        }
+    }
+
+    private void addFileToFilesList(Release release, ArrayList<JavaFile> files, GHCommit c, GHCommit.File f) {
+        if (f.getFileName().contains(".java") && !f.getFileName().contains("/test")) {
+            if (f.getStatus().equals("added")) {
+                files.add(createJavaFile(release, f, c));
+            } else {
+                try {
+                    addCommitAndFile(release, Objects.requireNonNull(findByName(f, files)), f, c);
+                } catch (NullPointerException e) {
+                    files.add(createJavaFile(release, f, c));
                 }
             }
         }

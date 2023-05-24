@@ -36,21 +36,7 @@ public class BugManager {
             Bug currBug = new Bug();
 
             ArrayList<GHCommit> linkedCommits = new ArrayList<>();
-
-            for (Release r : releases) {
-                for (GHCommit c : r.getCommits()) {
-                    if (c.getCommitShortInfo().getMessage().contains(ticket.getKey())) {
-                        linkedCommits.add(c);
-
-                        for (GHCommit.File file : c.getFiles()) {
-                            if (file.getFileName().contains(".java") && !file.getFileName().contains("/test")) {
-                                currBug.addBuggyFile(file.getFileName());
-                            }
-                        }
-                    }
-                }
-            }
-
+            linkCommitsAndBuggyFiles(releases, ticket, currBug, linkedCommits);
             currBug.setCommits(linkedCommits);
 
             currBug.setOpeningVersion(openingVersion);
@@ -72,31 +58,46 @@ public class BugManager {
             return proportion.addInjectedVersionsMovingWindow(bugs, releases);
         }
 
+    private static void linkCommitsAndBuggyFiles(List<Release> releases, JiraTicket ticket, Bug currBug, ArrayList<GHCommit> linkedCommits) throws IOException {
+        for (Release r : releases) {
+            for (GHCommit c : r.getCommits()) {
+                if (c.getCommitShortInfo().getMessage().contains(ticket.getKey())) {
+                    linkedCommits.add(c);
+
+                    for (GHCommit.File file : c.getFiles()) {
+                        if (file.getFileName().contains(".java") && !file.getFileName().contains("/test")) {
+                            currBug.addBuggyFile(file.getFileName());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     // Bug manager for cold start proportion
     public static List<Bug> getValidBugsMin(List<JiraTicket> tickets, List<Release> releases) {
-
         ArrayList<Bug> bugs = new ArrayList<>();
-        for(JiraTicket ticket:tickets){
-            if(ticket.getAffectedVersions().isEmpty() || ticket.getAffectedVersions().get(0) == null)
-                continue;
+        for (JiraTicket ticket : tickets) {
+            if (!ticket.getAffectedVersions().isEmpty() && ticket.getAffectedVersions().get(0) != null) {
+                Bug currBug = new Bug();
 
-            Bug currBug = new Bug();
+                Release injectedVersion = ticket.getAffectedVersions().get(0);
+                Release openingVersion = computeOpeningVersion(ticket, releases);
+                Release fixedVersion = ticket.getFixVersion();
 
-            Release injectedVersion = ticket.getAffectedVersions().get(0);
-            Release openingVersion = computeOpeningVersion(ticket, releases);
-            Release fixedVersion = ticket.getFixVersion();
+                if (openingVersion != null && fixedVersion != null && injectedVersion != null && openingVersion.getVersionNumber() <= fixedVersion.getVersionNumber()) {
+                    currBug.setInjectedVersion(injectedVersion);
+                    currBug.setOpeningVersion(openingVersion);
+                    currBug.setFixedVersion(fixedVersion);
 
-            if(openingVersion == null || fixedVersion == null || injectedVersion == null || openingVersion.getVersionNumber()>fixedVersion.getVersionNumber()) continue;
-
-            currBug.setInjectedVersion(injectedVersion);
-            currBug.setOpeningVersion(openingVersion);
-            currBug.setFixedVersion(fixedVersion);
-
-            bugs.add(currBug);
+                    bugs.add(currBug);
+                }
+            }
         }
         return bugs;
     }
+
 
     private static Release computeOpeningVersion(JiraTicket ticket, List<Release> releases) {
 

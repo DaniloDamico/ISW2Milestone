@@ -12,7 +12,7 @@ public class CSVManager {
 
     private static final String FOLDER = "output/";
     private static final String FILENAME = "dataset.csv";
-    private static FileWriter dataset;
+    private FileWriter dataset;
     private final String projName;
 
     private void createFile() {

@@ -66,44 +66,48 @@ public class Proportion {
             int ov = b.getOpeningVersion().getVersionNumber();
             int fv = b.getFixedVersion().getVersionNumber();
 
-            if (b.getInjectedVersion()==null){
-                double p;
-                ArrayList<Bug> bugsToComputeProportionOn = (ArrayList<Bug>) findBugsToComputeProportionOn(bugList, i, movingWindow);
-                if(bugsToComputeProportionOn.isEmpty())
-                    p = pColdStart;
-                else{
-                    // compute proportion
-                    double pNumerator = 0;
-                    for(Bug bug:bugsToComputeProportionOn){
-                        int currIV = bug.getInjectedVersion().getVersionNumber();
-                        int currOV = bug.getOpeningVersion().getVersionNumber();
-                        int currFV = bug.getFixedVersion().getVersionNumber();
-                        if(currFV == currOV)
-                            pNumerator += currFV - currIV;
-                        else
-                            pNumerator += (currFV - currIV) / (double)(currFV - currOV);
-                    }
-                    p = pNumerator / movingWindow;
-                }
-                // P = (FV - IV) / (FV - OV) therefore IV = FV - P * (FV - OV)
-
-                /*For each defect, we computed the IV as IV = (FV − OV ) ∗ P_Moving Window. If
-                FV equals OV, then IV equals FV. However, we excluded defects that were not
-                post-release. Therefore, we set FV − OV equal to 1 to assure IV is not equal to FV
-                 */
-                int iv;
-                if(fv == ov)
-                    iv = (int) Math.max(Math.round(fv - p),1);
-                else
-                    iv = (int) Math.max(Math.round(fv - (p * (fv - ov))),1);
-
-
-                b.setInjectedVersion(releases.get(Math.max(iv-1,0)));
-                bugList.set(i, b);
-            }
+            computeIV(bugList, releases, movingWindow, i, b, ov, fv);
         }
 
         return bugList;
+    }
+
+    private void computeIV(List<Bug> bugList, List<Release> releases, int movingWindow, int i, Bug b, int ov, int fv) {
+        if (b.getInjectedVersion()==null){
+            double p;
+            ArrayList<Bug> bugsToComputeProportionOn = (ArrayList<Bug>) findBugsToComputeProportionOn(bugList, i, movingWindow);
+            if(bugsToComputeProportionOn.isEmpty())
+                p = pColdStart;
+            else{
+                // compute proportion
+                double pNumerator = 0;
+                for(Bug bug:bugsToComputeProportionOn){
+                    int currIV = bug.getInjectedVersion().getVersionNumber();
+                    int currOV = bug.getOpeningVersion().getVersionNumber();
+                    int currFV = bug.getFixedVersion().getVersionNumber();
+                    if(currFV == currOV)
+                        pNumerator += currFV - currIV;
+                    else
+                        pNumerator += (currFV - currIV) / (double)(currFV - currOV);
+                }
+                p = pNumerator / movingWindow;
+            }
+            // P = (FV - IV) / (FV - OV) therefore IV = FV - P * (FV - OV)
+
+            /*For each defect, we computed the IV as IV = (FV − OV ) ∗ P_Moving Window. If
+            FV equals OV, then IV equals FV. However, we excluded defects that were not
+            post-release. Therefore, we set FV − OV equal to 1 to assure IV is not equal to FV
+             */
+            int iv;
+            if(fv == ov)
+                iv = (int) Math.max(Math.round(fv - p),1);
+            else
+                iv = (int) Math.max(Math.round(fv - (p * (fv - ov))),1);
+
+
+            b.setInjectedVersion(releases.get(Math.max(iv-1,0)));
+            bugList.set(i, b);
+        }
     }
 
     private List<Bug> findBugsToComputeProportionOn(List<Bug> bugs, int i, int movingWindow) {
