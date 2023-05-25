@@ -15,19 +15,46 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 public class MetricsManager {
-    private final CSVManager csvManager;
+    private final FileManager csvManager;
+    private final FileManager arffManager;
     private ArrayList<Bug> bugs;
-    private static final String HEADER = "Version,File Name,LOC,LOC_touched,NR,NFix,NAuth,LOC_added,MAX_LOC_added,AVG_LOC_added,Churn,MAX_Churn,AVG_Churn,ChgSetSize,MAX_ChgSet,AVG_ChgSet,Buggy";
+    private final String projName;
+    private static final String CSVHEADER = "Version,File Name,LOC,LOC touched,NR,NFix,NAuth,LOC Added,Max LOC added,Avg LOC added,Churn,Max churn,Avg churn,ChgSetSize,MAX ChgSet,AVG ChgSet,Buggy";
+    private static final String ARFFHEADER_RELATION = "@relation";
+    private static final String SEPARATOR = ",";
+    private static final String ARFFHEADER = """
+            @attribute Version numeric
+            @attribute 'File name' string
+            @attribute LOC numeric
+            @attribute 'LOC touched' numeric
+            @attribute NR numeric
+            @attribute NFix numeric
+            @attribute NAuth numeric
+            @attribute 'LOC added' numeric
+            @attribute 'Max LOC added' numeric
+            @attribute 'Avg LOC added' numeric
+            @attribute Churn numeric
+            @attribute 'Max churn' numeric
+            @attribute 'Avg churn' numeric
+            @attribute ChgSetSize numeric
+            @attribute 'Max ChgSetSize' numeric
+            @attribute 'Avg ChgSetSize' numeric
+            @attribute Buggy {yes,no}
+            @data""";
 
     public MetricsManager(String projName){
-        csvManager = new CSVManager(projName);
+        this.projName = projName;
+        csvManager = new FileManager(projName+"_dataset.csv");
+        arffManager = new FileManager(projName + "_dataset.arff");
     }
 
     //metrics don't stack between releases
     public void buildDataset(List<Release> releases, List<Bug> bugs) throws IOException {
 
         this.bugs = new ArrayList<>(bugs);
-        csvManager.writeLine(HEADER);
+        csvManager.writeLine(CSVHEADER);
+        arffManager.writeLine(ARFFHEADER_RELATION + " " + projName+"\n");
+        arffManager.writeLine(ARFFHEADER);
         ArrayList<JavaFile> files = new ArrayList<>();
 
         ArrayList<Release> firstHalf = new ArrayList<>(releases.subList(0, releases.size()/2));
@@ -39,6 +66,7 @@ public class MetricsManager {
         }
 
         csvManager.close();
+        arffManager.close();
     }
 
     private void computeMetricsToDataset(List<Bug> bugs, ArrayList<JavaFile> files, Release release) throws IOException {
@@ -50,25 +78,25 @@ public class MetricsManager {
             updateFile(release, jf);
 
             String line = "\n";
-            line += release.getVersionNumber() + ", " + jf.getFilename()+ ", ";
+            line += release.getVersionNumber() + SEPARATOR + jf.getFilename()+ SEPARATOR;
 
             try {
                 checkDeleted(release, jf);
 
-                line += jf.getLoc() + ", ";
-                line += jf.getLocTouched() + ", ";
-                line += jf.getNr() + ", ";
-                line += jf.getNfix() + ", ";
-                line += jf.getAuthors().size() + ", ";
-                line += jf.getLocAdded() + ", ";
-                line += jf.getMaxLocAdded() + ", ";
-                line += jf.getAvgLocAdded() + ", ";
-                line += jf.getChurn() + ", ";
-                line += jf.getMaxChurn() + ", ";
-                line += jf.getAvgChurn() + ", ";
-                line += jf.getChangeSet().size() + ", ";
-                line += jf.getMaxChangeSetSize() + ", ";
-                line += jf.getAvgChangeSetSize() + ", ";
+                line += jf.getLoc() + SEPARATOR;
+                line += jf.getLocTouched() + SEPARATOR;
+                line += jf.getNr() + SEPARATOR;
+                line += jf.getNfix() + SEPARATOR;
+                line += jf.getAuthors().size() + SEPARATOR;
+                line += jf.getLocAdded() + SEPARATOR;
+                line += jf.getMaxLocAdded() + SEPARATOR;
+                line += jf.getAvgLocAdded() + SEPARATOR;
+                line += jf.getChurn() + SEPARATOR;
+                line += jf.getMaxChurn() + SEPARATOR;
+                line += jf.getAvgChurn() + SEPARATOR;
+                line += jf.getChangeSet().size() + SEPARATOR;
+                line += jf.getMaxChangeSetSize() + SEPARATOR;
+                line += jf.getAvgChangeSetSize() + SEPARATOR;
 
                 boolean buggy = computeBuggy(release.getVersionNumber(), jf.getFilename(), bugs);
                 if (buggy)
@@ -77,6 +105,7 @@ public class MetricsManager {
                     line += "no";
 
                 csvManager.writeLine(line);
+                arffManager.writeLine(line);
             }
             catch (DeletedFileException e) {
                 jf.setDeleted(true);

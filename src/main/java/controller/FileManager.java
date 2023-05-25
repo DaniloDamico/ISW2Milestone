@@ -8,33 +8,32 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CSVManager {
+public class FileManager {
 
     private static final String FOLDER = "output/";
-    private static final String FILENAME = "dataset.csv";
     private FileWriter dataset;
-    private final String projName;
+    private final String filename;
 
     private void createFile() {
         try{
-            Files.deleteIfExists(Path.of(FOLDER + projName + FILENAME));
-            new File(FOLDER + projName + FILENAME);
+            Files.deleteIfExists(Path.of(FOLDER + filename));
+            new File(FOLDER + filename);
         } catch(Exception e){
-            Logger.getLogger(CSVManager.class.getName()).warning("File creation failed");
+            Logger.getLogger(FileManager.class.getName()).log(Level.WARNING, "File {0} creation failed", filename);
             e.printStackTrace();
         }
     }
     private void initializeWriter(){
         try {
-            dataset = new FileWriter(FOLDER + projName + FILENAME);
+            dataset = new FileWriter(FOLDER + filename);
         } catch (IOException e) {
-            Logger.getLogger(CSVManager.class.getName()).warning("File initialization failed");
+            Logger.getLogger(FileManager.class.getName()).warning("File initialization failed");
             e.printStackTrace();
         }
     }
 
-    public CSVManager(String projName) {
-        this.projName = projName;
+    public FileManager(String filename) {
+        this.filename = filename;
         createFile();
         initializeWriter();
     }
@@ -43,7 +42,7 @@ public class CSVManager {
         try {
             dataset.write(line);
         } catch (IOException e) {
-            Logger.getLogger(CSVManager.class.getName()).log(Level.WARNING, "Failed to write line: {0}", line);
+            Logger.getLogger(FileManager.class.getName()).log(Level.WARNING, "Failed to write line: {0}", line);
             e.printStackTrace();
         }
     }
@@ -53,7 +52,7 @@ public class CSVManager {
             dataset.flush();
             dataset.close();
         } catch (IOException e) {
-            Logger.getLogger(CSVManager.class.getName()).warning("Failed to close dataset");
+            Logger.getLogger(FileManager.class.getName()).warning("Failed to close dataset");
             e.printStackTrace();
         }
     }

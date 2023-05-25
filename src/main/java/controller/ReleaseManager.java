@@ -28,17 +28,29 @@ public class ReleaseManager {
             return o1.getReleaseDate().isAfter(o2.getReleaseDate())? 1:-1;
         });
 
-        // Releases are numbered from 1 to n
+        sortCommitsIntoReleases(releases, projName);
+
+        for(int i=0; i<releases.size();i++){
+            if(releases.get(i).getCommits().isEmpty()){
+                releases.remove(i);
+                i--;
+            }
+        }
+
+        setReleaseNumber(releases);
+
+        return releases;
+    }
+
+    private static void setReleaseNumber(ArrayList<Release> releases) {
         for(int i=0; i<releases.size();i++){
             Release currRelease = releases.get(i);
             currRelease.setVersionNumber(i+1);
             releases.set(i, currRelease);
         }
-
-        return sortCommitsIntoReleases(releases, projName);
     }
 
-    private static ArrayList<Release> sortCommitsIntoReleases(ArrayList<Release> releases, String projName) throws IOException {
+    private static void sortCommitsIntoReleases(ArrayList<Release> releases, String projName) throws IOException {
 
         Date cutoffDate = Conversions.localDateToDate(releases.get(releases.size()-1).getReleaseDate());
         ArrayList<GHCommit> commits = (ArrayList<GHCommit>) GitHubBoundary.getOrderedCommits(projName, cutoffDate);
@@ -53,6 +65,5 @@ public class ReleaseManager {
                 }
             }
         }
-        return releases;
     }
 }
