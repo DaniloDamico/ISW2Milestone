@@ -7,6 +7,7 @@ import enumerations.Sampling;
 import weka.classifiers.Evaluation;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class WekaEval {
     private final ClassifiersEnum classifier;
@@ -38,7 +39,7 @@ public class WekaEval {
         return costSensitiveClassifier;
     }
 
-    public ArrayList<Evaluation> getEvaluations(){
+    public List<Evaluation> getEvaluations(){
         return evaluationList;
     }
 

@@ -70,7 +70,9 @@ public class WekaManager{
             auc /= numInstances;
             kappa /= numInstances;
 
-            walkForwardManager.writeWalkForwardResults(precision, recall, auc, kappa, e.getClassifier(), e.getFeatureSelection(), e.getSampling(), e.getCostSensitiveClassifier());
+            Double[] performance = {precision, recall, auc, kappa};
+
+            walkForwardManager.writeWalkForwardResults(performance, e.getClassifier(), e.getFeatureSelection(), e.getSampling(), e.getCostSensitiveClassifier());
         }
         walkForwardManager.close();
     }
@@ -259,7 +261,9 @@ public class WekaManager{
         }
 
         // The size of the output dataset, as a percentage of the input dataset
-        return 100.0*(majorityClassSize - minorityClassSize)/ minorityClassSize;
+        if(minorityClassSize != 0)
+            return 100.0*(majorityClassSize - minorityClassSize)/ minorityClassSize;
+        else return majorityClassSize;
     }
 
     private static CostMatrix createCostMatrix(double

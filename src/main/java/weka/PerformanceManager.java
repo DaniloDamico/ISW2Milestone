@@ -45,17 +45,17 @@ public class PerformanceManager {
         fileManager.writeLine(eval.kappa() +"\n");
     }
 
-    public void writeWalkForwardResults(Double precision, Double recall, Double auc, Double kappa, ClassifiersEnum c, FeatureSelection f, Sampling s, CostSensitiveClassifiers csc){
+    public void writeWalkForwardResults(Double[] performance, ClassifiersEnum c, FeatureSelection f, Sampling s, CostSensitiveClassifiers csc){
 
         fileManager.writeLine(projName+SEPARATOR);
         fileManager.writeLine(c.getName()+SEPARATOR);
         fileManager.writeLine(f.getName()+SEPARATOR);
         fileManager.writeLine(s.getName()+SEPARATOR);
         fileManager.writeLine(csc.getName()+SEPARATOR);
-        fileManager.writeLine(precision +SEPARATOR);
-        fileManager.writeLine(recall +SEPARATOR);
-        fileManager.writeLine(auc +SEPARATOR);
-        fileManager.writeLine(kappa +"\n");
+        fileManager.writeLine(performance[0] +SEPARATOR); // precision
+        fileManager.writeLine(performance[1] +SEPARATOR); //recall
+        fileManager.writeLine(performance[2] +SEPARATOR); // auc
+        fileManager.writeLine(performance[3] +"\n"); // kappa
     }
 
     public void close(){

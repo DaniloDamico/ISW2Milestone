@@ -9,10 +9,7 @@ import utils.Conversions;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ReleaseManager {
 
@@ -30,12 +27,13 @@ public class ReleaseManager {
 
         sortCommitsIntoReleases(releases, projName);
 
-        for(int i=0; i<releases.size();i++){
-            if(releases.get(i).getCommits().isEmpty()){
-                releases.remove(i);
-                i--;
+        ArrayList<Release> filteredReleases = new ArrayList<>();
+        for (Release release : releases) {
+            if (!release.getCommits().isEmpty()) {
+                filteredReleases.add(release);
             }
         }
+        releases = filteredReleases;
 
         setReleaseNumber(releases);
 
