@@ -202,7 +202,8 @@ public class MetricsManager {
 
     //non cumula i valori tra le release
     private int computeNfix(int releaseNumber, JavaFile jf, List<Bug> bugs) throws IOException {
-        int nfix = jf.getNfix();
+        //int nfix = jf.getNfix(); cumulativo
+        int nfix = 0;
         for (Bug bug : bugs) {
             int fv = bug.getFixedVersion().getVersionNumber();
 
@@ -224,11 +225,16 @@ public class MetricsManager {
     private void updateFile(Release release, JavaFile jf) throws IOException {
 
         int loc = jf.getLoc();
-        int locAdded = jf.getLocAdded();
-        int maxLocAdded = jf.getMaxLocAdded();
-        int locTouched = jf.getLocTouched();
-        int churn = jf.getChurn();
-        int maxChurn = jf.getMaxChurn();
+        //int locAdded = jf.getLocAdded(); cumulativo
+        int locAdded = 0;
+        //int maxLocAdded = jf.getMaxLocAdded(); cumulativo
+        int maxLocAdded = 0;
+        //int locTouched = jf.getLocTouched(); cumulativo
+        int locTouched = 0;
+        //int churn = jf.getChurn(); cumulativo
+        int churn = 0;
+        //int maxChurn = jf.getMaxChurn(); cumulativo
+        int maxChurn = 0;
         for (GHCommit.File f : jf.getFileHistory().get(release)) {
             loc += f.getLinesAdded() - f.getLinesDeleted();
             locAdded += f.getLinesAdded();
@@ -263,7 +269,8 @@ public class MetricsManager {
         jf.setAuthors(computeAuthors(release, jf));
 
         Set<GHCommit.File> changeSet = jf.getChangeSet();
-        int maxChangeSet = jf.getMaxChangeSetSize();
+        //int maxChangeSet = jf.getMaxChangeSetSize(); cumulativo
+        int maxChangeSet = 0;
         int changeAvgNumerator = 0;
         double avgChangeSet = 0;
         for (GHCommit c : jf.getCommitsHistory().get(release)) {
@@ -285,7 +292,8 @@ public class MetricsManager {
     }
 
     private int computeNr(Release release, JavaFile jf){
-        int nr = jf.getNr();
+        //int nr = jf.getNr(); cumulativo
+        int nr = 0;
         int currentReleaseNR = jf.getFileHistory().get(release).size();
 
         nr += currentReleaseNR;

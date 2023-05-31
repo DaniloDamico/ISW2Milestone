@@ -37,6 +37,8 @@ public class Main {
             MetricsManager metricsManager = new MetricsManager(projName);
             metricsManager.buildDataset(releases, bugs);
             logger.log(Level.INFO, "Time elapsed: {0}min", (System.currentTimeMillis() - start) / (1000.0*60));
+
+
         }
     }
 }
