@@ -1,6 +1,5 @@
 package weka;
 
-import entities.WekaEval;
 import enumerations.ClassifiersEnum;
 import enumerations.CostSensitiveClassifiers;
 import enumerations.FeatureSelection;
@@ -31,57 +30,27 @@ public class WekaManager{
 
     private static final String FOLDER = "output/";
     private static final List<String> PROJLIST = new ArrayList<>(List.of("BOOKKEEPER", "SYNCOPE"));
-    private static PerformanceManager performanceManager;
+    private static WekaResultsManager wekaResultsManager;
 
-    private static ArrayList<WekaEval> evals;
     public static void main(String[] args) throws Exception{
 
         for(String projName:PROJLIST){
-            evals = new ArrayList<>();
             Instances dataset = loadData(projName);
             assert dataset != null;
-            performanceManager = new PerformanceManager(projName);
-            performanceManager.initializePerformanceFile();
+
+            wekaResultsManager = new WekaResultsManager(projName);
+
             walkForward(dataset);
-            performanceManager.close();
-            computeWalkForwardDataset(projName);
+            wekaResultsManager.close();
         }
 
-    }
-
-    private static void computeWalkForwardDataset(String projName){
-        PerformanceManager walkForwardManager = new PerformanceManager(projName + "WalkForward");
-        walkForwardManager.initializeWalkForwardFile();
-        for(WekaEval e:evals){
-
-            int numInstances = e.getEvaluations().size();
-            double precision = 0;
-            double recall = 0;
-            double auc = 0;
-            double kappa = 0;
-            for (Evaluation evaluation : e.getEvaluations()) {
-                precision += evaluation.precision(0);
-                recall += evaluation.recall(0);
-                auc += evaluation.areaUnderROC(0);
-                kappa += evaluation.kappa();
-            }
-            precision /= numInstances;
-            recall /= numInstances;
-            auc /= numInstances;
-            kappa /= numInstances;
-
-            Double[] performance = {precision, recall, auc, kappa};
-
-            walkForwardManager.writeWalkForwardResults(performance, e.getClassifier(), e.getFeatureSelection(), e.getSampling(), e.getCostSensitiveClassifier());
-        }
-        walkForwardManager.close();
     }
 
     private static Instances loadData(String projName) {
         try {
             DataSource data = new DataSource(FOLDER + projName + "_dataset.arff");
             Instances instances = data.getDataSet();
-            instances.setClassIndex(instances.numAttributes()-1); // Assuming last attribute as the class attribute
+            instances.setClassIndex(instances.numAttributes()-1);
             return instances;
         } catch (Exception e) {
             e.printStackTrace();
@@ -126,22 +95,11 @@ public class WekaManager{
                 for(CostSensitiveClassifiers csc : CostSensitiveClassifiers.values()) {
                     for (ClassifiersEnum c : ClassifiersEnum.values()) {
                         Evaluation eval = runWeka(training, testing, c, f, s, csc);
-                        performanceManager.writeResults(eval, numberOfTrainingRelease, c, f, s, csc);
-                        addToEvalList(eval, c, f, s, csc);
+                        wekaResultsManager.writeResults(eval, numberOfTrainingRelease, c, f, s, csc);
                     }
                 }
             }
         }
-    }
-
-    private static void addToEvalList(Evaluation eval, ClassifiersEnum c, FeatureSelection f, Sampling s, CostSensitiveClassifiers csc) {
-        for(WekaEval e: evals){
-            if(e.getClassifier().equals(c) && e.getFeatureSelection().equals(f) && e.getSampling().equals(s) && e.getCostSensitiveClassifier().equals(csc)){
-                e.addEvaluation(eval);
-                return;
-            }
-        }
-        evals.add(new WekaEval(c, f, s, csc));
     }
 
     public static Evaluation runWeka(Instances training, Instances testing, ClassifiersEnum c, FeatureSelection f, Sampling s, CostSensitiveClassifiers csc) throws Exception {
@@ -244,9 +202,13 @@ public class WekaManager{
 
         // classifier
         switch (c) {
-            case RANDOM_FOREST -> classifier = new RandomForest();
+            case RANDOM_FOREST -> {
+                classifier = new RandomForest();
+            }
             case NAIVE_BAYES -> classifier = new NaiveBayes();
-            case IBK -> classifier = new IBk();
+            case IBK -> {
+                classifier = new IBk();
+            }
             default -> throw new IllegalStateException("Unexpected Classifier value: " + c);
         }
 
