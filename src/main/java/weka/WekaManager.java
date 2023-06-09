@@ -154,15 +154,18 @@ public class WekaManager{
         training = Filter.useFilter(training, filter);
         testing = Filter.useFilter(testing, filter);
 
-        double y = computeBalancingPercentage(training);
-
-
         //feature selection
         if(f.equals(FeatureSelection.BEST_FIRST)) {
             // Apply the feature selection algorithm
             AttributeSelection featureSelectionFilter = new AttributeSelection();
             CfsSubsetEval evaluator = new CfsSubsetEval();
             BestFirst search = new BestFirst();
+
+            String[] evalOptions = {"-P", "1", "-E", "1"};
+            evaluator.setOptions(evalOptions);
+
+            String[] searchOptions = {"-D", "1", "-N", "5"};
+            search.setOptions(searchOptions);
 
             featureSelectionFilter.setEvaluator(evaluator);
             featureSelectionFilter.setSearch(search);
@@ -172,20 +175,43 @@ public class WekaManager{
             testing = Filter.useFilter(testing, featureSelectionFilter);
         }
 
+        Instances minorityClassInstances = new Instances(training, 0);
+        Instances majorityClassInstances = new Instances(training, 0);
+        for (Instance instance : training) {
+            if (instance.stringValue(training.numAttributes()-1).equals("yes")) {
+                minorityClassInstances.add(instance);
+            } else {
+                majorityClassInstances.add(instance);
+            }
+        }
+
+        // Calculate the oversampling ratio
+        int minoritySize = minorityClassInstances.size();
+        int majoritySize = majorityClassInstances.size();
+        double oversamplingRatio = (double) majoritySize / minoritySize;
+
         //sampling
         switch (s) {
             case NO_SAMPLING -> {
                 //do nothing
             }
             case OVERSAMPLING -> {
-                Resample resample = new Resample();
 
-                resample.setInputFormat(training);
-                resample.setNoReplacement(false);
-                // samples minority instances until they match majority instances in number
-                resample.setBiasToUniformClass(1.0);
-                resample.setSampleSizePercent(y);
-                training = Filter.useFilter(training, resample);
+                // Apply Resample filter for oversampling
+                Resample resampleFilter = new Resample();
+                resampleFilter.setSampleSizePercent(oversamplingRatio*100);
+                resampleFilter.setBiasToUniformClass(1.0);
+
+                // Oversample the minority class
+                resampleFilter.setInputFormat(minorityClassInstances);
+                Instances oversampledMinorityInstances = Filter.useFilter(minorityClassInstances, resampleFilter);
+
+                // Combine oversampled minority instances with majority instances
+                Instances oversampledData = new Instances(training, 0);
+                oversampledData.addAll(majorityClassInstances);
+                oversampledData.addAll(oversampledMinorityInstances);
+
+                training = oversampledData;
 
             }
             case UNDERSAMPLING -> {
@@ -195,13 +221,18 @@ public class WekaManager{
                 spreadSubsample.setOptions(opts);
                 spreadSubsample.setInputFormat(training);
                 training = Filter.useFilter(training, spreadSubsample);
+
             }
             case SMOTE -> {
                 SMOTE smote = new SMOTE();
                 smote.setInputFormat(training);
 
                 //make both groups the same dimension
-                String[] opts = new String[]{ "-P", String.valueOf(y)};
+                String percentageToCreate = "0";
+                if(minoritySize !=0)
+                    percentageToCreate= String.valueOf((majoritySize-minoritySize)/(double)minoritySize*100.0);
+
+                String[] opts = new String[]{ "-P", percentageToCreate};
                 smote.setOptions(opts);
 
                 training = Filter.useFilter(training, smote);
@@ -246,24 +277,6 @@ public class WekaManager{
         }
 
         return eval;
-    }
-
-    private static double computeBalancingPercentage(Instances training) {
-        // Calculate the number of instances in each class
-        int minorityClassSize = 0;
-        int majorityClassSize = 0;
-        for (int i = 0; i < training.numInstances(); i++) {
-            if (training.instance(i).stringValue(training.numAttributes()-1).equals("yes")) {
-                minorityClassSize++;
-            } else {
-                majorityClassSize++;
-            }
-        }
-
-        // The size of the output dataset, as a percentage of the input dataset
-        if(minorityClassSize != 0)
-            return 100.0*(majorityClassSize - minorityClassSize)/ minorityClassSize;
-        else return majorityClassSize;
     }
 
     private static CostMatrix createCostMatrix(double
