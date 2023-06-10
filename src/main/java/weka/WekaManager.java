@@ -29,6 +29,8 @@ import java.util.List;
 
 public class WekaManager{
 
+    private WekaManager(){}
+
     protected static void walkForward(Instances dataset, WekaResultsManager wrm,ClassifiersEnum c,FeatureSelection f,Sampling s, CostSensitiveClassifiers csc) throws Exception {
 
         Instances training = new Instances(dataset,0);
