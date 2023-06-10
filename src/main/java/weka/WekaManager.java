@@ -24,6 +24,8 @@ import weka.filters.supervised.instance.SpreadSubsample;
 import weka.filters.unsupervised.attribute.StringToNominal;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class WekaManager{
@@ -66,36 +68,42 @@ public class WekaManager{
         training.setClassIndex(training.numAttributes() - 1);
         testing.setClassIndex(testing.numAttributes() - 1);
 
-        double currVersion = dataset.get(0).value(0);
 
-        for (Instance row : dataset) {
-            if(row.value(0)==currVersion){
-                testing.add(row);
-            } else{
-                if(!training.isEmpty()){
-                    setupAndRunWeka(training, testing);
+        HashSet<Integer> uniqueValues = new HashSet<>();
+        for(Instance row: dataset)  uniqueValues.add((int) row.value(0));
+        List<Integer> versionsList = new ArrayList<>(uniqueValues);
+        Collections.sort(versionsList);
+
+        for(int ver:versionsList){
+            for(Instance row: dataset){
+                if(row.value(0)==ver){
+                    testing.add(row);
                 }
-
-                currVersion = row.value(0);
-                training.addAll(testing);
-                testing.clear();
-                testing.add(row);
             }
-        }
-        setupAndRunWeka(training, testing);
 
+            if(!training.isEmpty()){
+                Instances trainingCopy = new Instances(training);
+                Instances testingCopy = new Instances(testing);
+                setupAndRunWeka(trainingCopy, testingCopy);
+            }
+
+            training.addAll(testing);
+            testing.clear();
+        }
     }
 
     private static void setupAndRunWeka(Instances training, Instances testing) throws Exception{
 
-        int numberOfTrainingRelease = (int) training.lastInstance().value(0);
+        int testingRelease = (int) testing.get(0).value(0);
 
         for(FeatureSelection f : FeatureSelection.values()) {
             for(Sampling s : Sampling.values()) {
                 for(CostSensitiveClassifiers csc : CostSensitiveClassifiers.values()) {
                     for (ClassifiersEnum c : ClassifiersEnum.values()) {
-                        Evaluation eval = runWeka(training, testing, c, f, s, csc);
-                        wekaResultsManager.writeResults(eval, numberOfTrainingRelease, c, f, s, csc);
+                        Instances trainingCopy = new Instances(training);
+                        Instances testingCopy = new Instances(testing);
+                        Evaluation eval = runWeka(trainingCopy, testingCopy, c, f, s, csc);
+                        wekaResultsManager.writeResults(eval, testingRelease, c, f, s, csc);
                     }
                 }
             }
