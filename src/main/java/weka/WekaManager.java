@@ -15,7 +15,6 @@ import weka.classifiers.meta.CostSensitiveClassifier;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.supervised.attribute.AttributeSelection;
 import weka.filters.supervised.instance.Resample;
@@ -30,44 +29,13 @@ import java.util.List;
 
 public class WekaManager{
 
-    private static final String FOLDER = "output/";
-    private static final List<String> PROJLIST = new ArrayList<>(List.of("BOOKKEEPER", "SYNCOPE"));
-    private static WekaResultsManager wekaResultsManager;
-
-    public static void main(String[] args) throws Exception{
-
-        for(String projName:PROJLIST){
-            Instances dataset = loadData(projName);
-            assert dataset != null;
-
-            wekaResultsManager = new WekaResultsManager(projName);
-
-            walkForward(dataset);
-            wekaResultsManager.close();
-        }
-
-    }
-
-    private static Instances loadData(String projName) {
-        try {
-            DataSource data = new DataSource(FOLDER + projName + "_dataset.arff");
-            Instances instances = data.getDataSet();
-            instances.setClassIndex(instances.numAttributes()-1);
-            return instances;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private static void walkForward(Instances dataset) throws Exception {
+    protected static void walkForward(Instances dataset, WekaResultsManager wrm,ClassifiersEnum c,FeatureSelection f,Sampling s, CostSensitiveClassifiers csc) throws Exception {
 
         Instances training = new Instances(dataset,0);
         Instances testing = new Instances(dataset,0);
 
         training.setClassIndex(training.numAttributes() - 1);
         testing.setClassIndex(testing.numAttributes() - 1);
-
 
         HashSet<Integer> uniqueValues = new HashSet<>();
         for(Instance row: dataset)  uniqueValues.add((int) row.value(0));
@@ -84,29 +52,13 @@ public class WekaManager{
             if(!training.isEmpty()){
                 Instances trainingCopy = new Instances(training);
                 Instances testingCopy = new Instances(testing);
-                setupAndRunWeka(trainingCopy, testingCopy);
+
+                Evaluation eval = runWeka(trainingCopy,testingCopy,c,f,s,csc);
+                wrm.writeResults(eval, ver, c, f, s, csc);
             }
 
             training.addAll(testing);
             testing.clear();
-        }
-    }
-
-    private static void setupAndRunWeka(Instances training, Instances testing) throws Exception{
-
-        int testingRelease = (int) testing.get(0).value(0);
-
-        for(FeatureSelection f : FeatureSelection.values()) {
-            for(Sampling s : Sampling.values()) {
-                for(CostSensitiveClassifiers csc : CostSensitiveClassifiers.values()) {
-                    for (ClassifiersEnum c : ClassifiersEnum.values()) {
-                        Instances trainingCopy = new Instances(training);
-                        Instances testingCopy = new Instances(testing);
-                        Evaluation eval = runWeka(trainingCopy, testingCopy, c, f, s, csc);
-                        wekaResultsManager.writeResults(eval, testingRelease, c, f, s, csc);
-                    }
-                }
-            }
         }
     }
 
@@ -229,19 +181,19 @@ public class WekaManager{
         switch (csc) {
             case NO_COST_SENSITIVE -> {
                 classifier.buildClassifier(training);
-
                 eval.evaluateModel(classifier, testing);
             }
             case SENSITIVE_THRESHOLD -> {
-
+                costSensitiveClassifier.setMinimizeExpectedCost(true);
                 costSensitiveClassifier.setCostMatrix( createCostMatrix(1));
                 costSensitiveClassifier.buildClassifier(training);
-                eval.evaluateModel(classifier, testing);
+                eval.evaluateModel(costSensitiveClassifier, testing);
             }
             case SENSITIVE_LEARNING -> {
+                costSensitiveClassifier.setMinimizeExpectedCost(false);
                 costSensitiveClassifier.setCostMatrix( createCostMatrix(10));
                 costSensitiveClassifier.buildClassifier(training);
-                eval.evaluateModel(classifier, testing);
+                eval.evaluateModel(costSensitiveClassifier, testing);
             }
             default -> throw new IllegalStateException("Unexpected Cost Sensitive Classifier value: " + c);
         }
@@ -253,8 +205,8 @@ public class WekaManager{
             weightFalseNegative){
         CostMatrix costMatrix = new CostMatrix(2);
         costMatrix.setCell(0, 0, 0.0);
-        costMatrix.setCell(1, 0, (double) 1);
-        costMatrix.setCell(0, 1, weightFalseNegative);
+        costMatrix.setCell(1, 0, weightFalseNegative);
+        costMatrix.setCell(0, 1, (double) 1);
         costMatrix.setCell(1, 1, 0.0);
         return costMatrix;
     }

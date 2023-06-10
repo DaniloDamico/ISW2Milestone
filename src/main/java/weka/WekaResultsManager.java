@@ -34,7 +34,10 @@ public class WekaResultsManager {
         fileManager.writeLine(eval.precision(0) +SEPARATOR);
         fileManager.writeLine(eval.recall(0) +SEPARATOR);
         fileManager.writeLine(eval.areaUnderROC(0) +SEPARATOR);
-        fileManager.writeLine(eval.kappa() +"\n");
+        double kappa = eval.kappa();
+        if(kappa <= -1 ) kappa = -1;
+        fileManager.writeLine(kappa +"\n");
+
     }
 
     public void close(){
