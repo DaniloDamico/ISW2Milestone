@@ -172,6 +172,7 @@ public class WekaManager{
             default -> throw new IllegalStateException("Unexpected Classifier value: " + c);
         }
 
+        classifier.buildClassifier(training);
         Evaluation eval = new Evaluation(testing);
 
         CostSensitiveClassifier costSensitiveClassifier = new CostSensitiveClassifier();
@@ -180,18 +181,23 @@ public class WekaManager{
         // cost sensitive classifier
         switch (csc) {
             case NO_COST_SENSITIVE -> {
-                classifier.buildClassifier(training);
                 eval.evaluateModel(classifier, testing);
             }
             case SENSITIVE_THRESHOLD -> {
                 costSensitiveClassifier.setMinimizeExpectedCost(true);
                 costSensitiveClassifier.setCostMatrix( createCostMatrix(1));
+
+                eval = new Evaluation(testing, createCostMatrix(1));
+
                 costSensitiveClassifier.buildClassifier(training);
                 eval.evaluateModel(costSensitiveClassifier, testing);
             }
             case SENSITIVE_LEARNING -> {
                 costSensitiveClassifier.setMinimizeExpectedCost(false);
                 costSensitiveClassifier.setCostMatrix( createCostMatrix(10));
+
+                eval = new Evaluation(testing, createCostMatrix(10));
+
                 costSensitiveClassifier.buildClassifier(training);
                 eval.evaluateModel(costSensitiveClassifier, testing);
             }
@@ -205,8 +211,8 @@ public class WekaManager{
             weightFalseNegative){
         CostMatrix costMatrix = new CostMatrix(2);
         costMatrix.setCell(0, 0, 0.0);
-        costMatrix.setCell(1, 0, weightFalseNegative);
-        costMatrix.setCell(0, 1, (double) 1);
+        costMatrix.setCell(0, 1, weightFalseNegative);
+        costMatrix.setCell(1, 0, (double) 1);
         costMatrix.setCell(1, 1, 0.0);
         return costMatrix;
     }
